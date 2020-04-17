@@ -1,8 +1,3 @@
-# For each of 20 random splits
-# if the domain is amazon, there will be 20 examples per category
-# if the domain is dslr/webcam, there will be 8 examples per category
-# the target will always have 3 examples per category
-
 import os
 import random
 
