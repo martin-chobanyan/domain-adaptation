@@ -3,7 +3,7 @@ from .misc import accuracy, AverageKeeper, softmax_pred
 
 
 def train_epoch(model, loader, criterion, optimizer, device):
-    """Train the model for an epoch and return the average training loss
+    """Train a vanilla neural network for an epoch
 
     Parameters
     ----------
@@ -17,6 +17,11 @@ def train_epoch(model, loader, criterion, optimizer, device):
         The optimizer for this model
     device: torch.device
         The device for where the model will be trained
+
+    Returns
+    -------
+    tuple[float]
+        A tuple containing the average loss and accuracy across the epoch
     """
     loss_avg = AverageKeeper()
     acc_avg = AverageKeeper()
@@ -38,7 +43,7 @@ def train_epoch(model, loader, criterion, optimizer, device):
 
 
 def test_epoch(model, loader, criterion, device):
-    """Test the model for an epoch and return the average test loss
+    """Test a vanilla neural network for an epoch
 
     Parameters
     ----------
@@ -50,6 +55,11 @@ def test_epoch(model, loader, criterion, device):
         The loss criterion for the model
     device: torch.device
         The device for where the model will be trained
+
+    Returns
+    -------
+    tuple[float]
+        A tuple containing the average loss and accuracy across the epoch
     """
     loss_avg = AverageKeeper()
     acc_avg = AverageKeeper()
