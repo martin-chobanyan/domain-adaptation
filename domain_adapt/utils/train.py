@@ -1,5 +1,38 @@
 import torch
-from .misc import accuracy, AverageKeeper, softmax_pred
+from .misc import AverageKeeper
+
+
+def softmax_pred(linear_out):
+    """Apply softmax and collect the predictions
+
+    Parameters
+    ----------
+    linear_out: torch.Tensor
+        The tensor output of the pytorch nn model. Assumes 2D, stacked vectors
+
+    Returns
+    -------
+    torch.LongTensor
+        A tensor of the argmax for each vector
+    """
+    softmax_out = torch.softmax(linear_out, dim=1)
+    pred = torch.argmax(softmax_out, dim=1)
+    return pred
+
+
+def accuracy(preds, targets):
+    """Calculate the accuracy
+
+    Parameters
+    ----------
+    preds: torch.LongTensor
+    targets: torch.LongTensor
+
+    Returns
+    -------
+    float
+    """
+    return (preds == targets).sum().item() / len(targets)
 
 
 def train_epoch(model, loader, criterion, optimizer, device):
