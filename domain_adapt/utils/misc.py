@@ -82,3 +82,21 @@ def create_dir(path):
     """
     if not os.path.exists(path) and not os.path.isdir(path):
         os.makedirs(path, exist_ok=True)
+
+
+def get_script_dir(script_path):
+    """Get the path of the directory containing a python script
+
+    Examples
+    --------
+    >>> get_script_dir(__file__)  # this should be called from within the script to work
+
+    Parameters
+    ----------
+    script_path: str
+
+    Returns
+    -------
+    str
+    """
+    return os.path.split(os.path.realpath(script_path))[0]
