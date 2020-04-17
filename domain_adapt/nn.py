@@ -3,6 +3,11 @@ from torch.nn import Module
 from torch.autograd import Function
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+# Useful domain adaptation layers
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 class ReverseGradient(Module):
     """A gradient reversal layer
 
@@ -21,6 +26,11 @@ class ReverseGradient(Module):
 
     def forward(self, x):
         return self.reverse_grad.apply(x, self.scale)
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Custom autograd Functions
+# ----------------------------------------------------------------------------------------------------------------------
 
 
 class ReverseGradFunction(Function):

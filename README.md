@@ -1,7 +1,7 @@
 # domain-adaptation
 
 This repo provides pytorch implementations of several domain adaptation techniques,
-along with scripts recreating the results of the respective papers.
+along with scripts recreating the results of their respective papers.
 
 It also comes with a local python package **domain_adapt** which holds several utilities
 for domain adaptation including: 
