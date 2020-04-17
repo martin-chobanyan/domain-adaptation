@@ -1,3 +1,7 @@
+"""Miscellaneous utility functions"""
+
+import os
+
 import torch
 
 
@@ -67,3 +71,14 @@ def accuracy(preds, targets):
     float
     """
     return (preds == targets).sum().item() / len(targets)
+
+
+def create_dir(path):
+    """Create the given directory (recursively) if it does not exist
+
+    Parameters
+    ----------
+    path: str
+    """
+    if not os.path.exists(path) and not os.path.isdir(path):
+        os.makedirs(path, exist_ok=True)
