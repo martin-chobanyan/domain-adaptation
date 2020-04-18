@@ -1,5 +1,29 @@
+from csv import writer as csv_writer
+
 import torch
 from .misc import AverageKeeper
+
+
+class TrainingLogger:
+    """A helper class to log the training status across different model runs
+
+    Parameters
+    ----------
+    filepath: str
+        The filepath for the output CSV log file
+    """
+
+    def __init__(self, filepath):
+        self.filepath = filepath
+        with open(filepath, 'w') as file:
+            header = ['Run', 'Epoch', 'Train Loss', 'Test Loss', 'Train Accuracy', 'Test Accuracy']
+            writer = csv_writer(file)
+            writer.writerow(header)
+
+    def add_entry(self, run, epoch, train_loss, test_loss, train_acc, test_acc):
+        with open(self.filepath, 'a') as file:
+            writer = csv_writer(file)
+            writer.writerow([run, epoch, train_loss, test_loss, train_acc, test_acc])
 
 
 def softmax_pred(linear_out):
@@ -108,3 +132,20 @@ def test_epoch(model, loader, criterion, device):
             preds = softmax_pred(out.detach())
             acc_avg.add(accuracy(preds, labels.squeeze()))
     return loss_avg.calculate(), acc_avg.calculate()
+
+
+def checkpoint(model, filepath):
+    """Save the state of the model
+
+    To restore the model do the following:
+    >> the_model = TheModelClass(*args, **kwargs)
+    >> the_model.load_state_dict(torch.load(PATH))
+
+    Parameters
+    ----------
+    model: nn.Module
+        The pytorch model to be saved
+    filepath: str
+        The filepath of the pickle
+    """
+    torch.save(model.state_dict(), filepath)
