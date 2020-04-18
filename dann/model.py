@@ -82,7 +82,7 @@ class DANN(nn.Module):
         The scaling factor for the gradient reversal layer (default = 1)
     """
 
-    def __init__(self, feature_nn=None, label_nn=None, domain_nn=None, reverse_scale=1):
+    def __init__(self, feature_nn, label_nn, domain_nn, reverse_scale=1):
         super().__init__()
         self.feature_nn = feature_nn
         self.label_nn = label_nn
