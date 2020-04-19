@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 from torchvision.models import alexnet
 
-from domain_adapt.nn import ReverseGradient
+from domain_adapt.nn.layers import ReverseGradient
 
 
 # ----------------------------------------------------------------------------------------------------------------------
