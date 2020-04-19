@@ -172,12 +172,12 @@ class DANN(nn.Module):
         out_src_label = self.label_nn(src_features)
 
         # pass both source and target features through a gradient reversal layer
-        src_features_ = self.reverse_grad(src_features, da_scale)
-        tgt_features_ = self.reverse_grad(tgt_features, da_scale)
+        src_features_reversed = self.reverse_grad(src_features, da_scale)
+        tgt_features_reversed = self.reverse_grad(tgt_features, da_scale)
 
         # get the pre-softmax source and target domain scores
-        out_src_domain = self.domain_nn(src_features_)
-        out_tgt_domain = self.domain_nn(tgt_features_)
+        out_src_domain = self.domain_nn(src_features_reversed)
+        out_tgt_domain = self.domain_nn(tgt_features_reversed)
 
         return out_src_label, out_src_domain, out_tgt_domain
 
