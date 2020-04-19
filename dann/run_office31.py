@@ -1,4 +1,3 @@
-# TODO: add training pipeline for DANN model
 # TODO: figure out the number of epochs to train
 
 import os
@@ -7,17 +6,22 @@ import torch
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from torch.utils.data import DataLoader
+from torchvision.transforms import Compose, Resize, ToTensor
 from tqdm import tqdm
 
+from domain_adapt.data import ImagenetNorm
 from domain_adapt.data.office31 import Office31
 from domain_adapt.utils.misc import create_dir, get_script_dir
-from domain_adapt.utils.train import TrainingLogger
-from model import pretrained_alexnet, LabelClassifier, DomainClassifier, DANN
+from domain_adapt.utils.train import TrainingLogger, test_epoch, checkpoint
+
+from model import *
 
 NUM_CLASSES = 31
 BATCH_SIZE = NUM_CLASSES  # this is just a convenience so that the dataset is divisible by the batch size
-NUM_RUNS = 20
+NUM_RUNS = 1
 NUM_EPOCHS = 100
+MOMENTUM = 0.9
+IMAGE_SHAPE = (256, 256)
 
 
 def load_model():
@@ -37,33 +41,58 @@ def run_domain_adaptation(root_dir,
                           num_epochs=NUM_EPOCHS,
                           source_batch_size=BATCH_SIZE,
                           target_batch_size=BATCH_SIZE,
-                          save_models=False):
-    # set up the DANN model
-    model = load_model()
-    model = model.to(device)
-
-    # set up the loss function and optimizer
-    criterion = CrossEntropyLoss()
-    optimizer = SGD(model.parameters(), lr=0.01)
-
+                          save_models=False,
+                          transforms=None):
     # set up the train logger
     logger_path = os.path.join(output_dir, f'{source_domain}-{target_domain}.csv')
     logger = TrainingLogger(logger_path)
 
     # set up the model checkpoint directory
-    model_dir = os.path.join(output_dir, 'models')
+    model_dir = os.path.join(output_dir, 'models', f'{source_domain}-{target_domain}')
     if save_models:
         create_dir(model_dir)
 
-    for run in tqdm(range(num_runs)):
-        source_data = Office31(root_dir, domain=source_domain, source=True)
-        target_data = Office31(root_dir, domain=target_domain, source=False)
+    # set up the learning rate and domain adaptation hyperparameter schedulers
+    schedule_lr = LRScheduler(num_epochs)
+    schedule_da = DAScheduler(num_epochs)
 
-        source_loader = DataLoader(source_data, source_batch_size, shuffle=True)
-        target_loader = DataLoader(target_data, target_batch_size, shuffle=True)
+    criterion = CrossEntropyLoss()
+    for run in range(num_runs):
+        src_data = Office31(root_dir, domain=source_domain, source=True, transforms=transforms)
+        tgt_data = Office31(root_dir, domain=target_domain, source=False, transforms=transforms)
 
-        for epoch in range(num_epochs):
-            pass
+        src_loader = DataLoader(src_data, source_batch_size, shuffle=True)
+        tgt_loader = DataLoader(tgt_data, target_batch_size, shuffle=True)
+
+        # set up the DANN model
+        model = load_model()
+        model = model.to(device)
+
+        for epoch in tqdm(range(num_epochs)):
+            # set the optimizer's new learning rate (this wrapper operation is cheap)
+            learning_rate = schedule_lr(epoch)
+            optimizer = SGD(model.parameters(), lr=learning_rate, momentum=MOMENTUM)
+
+            # train the model
+            da_lambda = schedule_da(epoch)
+            # da_lambda = epoch / num_epochs
+
+            # print(f'Epoch: {epoch}')
+            # print(f'Learning Rate: {learning_rate}')
+            # print(f'DA lambda: {da_lambda}')
+            # print()
+
+            train_dann_epoch(model, src_loader, tgt_loader, criterion, optimizer, device, da_lambda)
+
+            # test the label classifier
+            full_classifier = model.retrieve_model()
+            src_loss, src_acc = test_epoch(full_classifier, src_loader, criterion, device)
+            tgt_loss, tgt_acc = test_epoch(full_classifier, tgt_loader, criterion, device)
+
+            logger.add_entry(run, epoch, src_loss, tgt_loss, src_acc, tgt_acc)
+
+        if save_models:
+            checkpoint(model, os.path.join(model_dir, f'model-run{run}.pt'))
 
 
 if __name__ == '__main__':
@@ -74,5 +103,8 @@ if __name__ == '__main__':
     output_dir = os.path.join(get_script_dir(__file__), 'results', 'office-31')
     create_dir(output_dir)
 
-    # amazon -> webcam
-    run_domain_adaptation(root_dir, output_dir, source_domain='amazon', target_domain='webcam', device=device)
+    img_transforms = Compose([Resize(IMAGE_SHAPE), ToTensor(), ImagenetNorm()])
+
+    print('amazon -> webcam:')
+    run_domain_adaptation(root_dir, output_dir, 'amazon', 'webcam', device, transforms=img_transforms)
+    print()
