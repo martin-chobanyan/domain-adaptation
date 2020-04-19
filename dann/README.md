@@ -1,4 +1,4 @@
-# Domain Adversarial Neural Network (DANN)
+# Domain Adversarial Neural Network (DANN) - Work in Progress
 
 ### Paper:
 [Domain-Adversarial Training of Neural Networks](https://arxiv.org/pdf/1505.07818.pdf)

@@ -2,10 +2,8 @@ from torch.nn import Sequential
 from torchvision.models import alexnet
 
 
-def pretrained_alexnet():
-    """Prepares an AlexNet feature extractor pre-trained on ImageNet
-
-    Note: The final fc8 layer is removed from the network, resulting in a 4096-dim output.
+def pretrained_alexnet_fc7():
+    """Prepares an AlexNet feature extractor ending at layer fc7 (pre-trained on ImageNet)
 
     Returns
     -------
