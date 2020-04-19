@@ -7,7 +7,7 @@ VALID_DOMAINS = ['amazon', 'dslr', 'webcam']
 
 
 class Office31(ImageFolder):
-    def __init__(self, root_dir, domain, source, num_per_category=None):
+    def __init__(self, root_dir, domain, source, num_per_category=None, transforms=None):
         self.domain = domain.lower()
         if self.domain not in VALID_DOMAINS:
             raise ValueError(f'"domain" argument must be one of: {VALID_DOMAINS}')
@@ -28,7 +28,7 @@ class Office31(ImageFolder):
 
         self.sampled_files = self.sample_per_category()
 
-        super().__init__(root=self.domain_dir, is_valid_file=self.check_file)
+        super().__init__(root=self.domain_dir, is_valid_file=self.check_file, transform=transforms)
 
     def sample_per_category(self):
         sampled_files = dict()

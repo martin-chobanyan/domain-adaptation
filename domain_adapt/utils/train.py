@@ -16,14 +16,14 @@ class TrainingLogger:
     def __init__(self, filepath):
         self.filepath = filepath
         with open(filepath, 'w') as file:
-            header = ['Run', 'Epoch', 'Train Loss', 'Test Loss', 'Train Accuracy', 'Test Accuracy']
+            header = ['Run', 'Epoch', 'Source Loss', 'Target Loss', 'Source Accuracy', 'Target Accuracy']
             writer = csv_writer(file)
             writer.writerow(header)
 
-    def add_entry(self, run, epoch, train_loss, test_loss, train_acc, test_acc):
+    def add_entry(self, run, epoch, src_loss, tgt_loss, src_acc, tgt_acc):
         with open(self.filepath, 'a') as file:
             writer = csv_writer(file)
-            writer.writerow([run, epoch, train_loss, test_loss, train_acc, test_acc])
+            writer.writerow([run, epoch, src_loss, tgt_loss, src_acc, tgt_acc])
 
 
 def softmax_pred(linear_out):

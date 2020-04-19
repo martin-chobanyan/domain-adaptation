@@ -13,19 +13,14 @@ class ReverseGradient(Module):
 
     This layer behaves like the identify function during the forward pass.
     During the backward pass, the sign of the incoming gradient to this layer is reversed and the value is scaled.
-
-    Parameters
-    ----------
-    scale: float
     """
 
-    def __init__(self, scale):
+    def __init__(self):
         super().__init__()
-        self.scale = torch.tensor(scale)
         self.reverse_grad = ReverseGradFunction()
 
-    def forward(self, x):
-        return self.reverse_grad.apply(x, self.scale)
+    def forward(self, x, scale=1):
+        return self.reverse_grad.apply(x, scale)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -38,7 +33,7 @@ class ReverseGradFunction(Function):
 
     @staticmethod
     def forward(ctx, x, scale):
-        ctx.save_for_backward(scale)
+        ctx.save_for_backward(torch.tensor(scale))
         return x
 
     @staticmethod
