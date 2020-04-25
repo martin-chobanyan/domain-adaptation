@@ -7,28 +7,41 @@ VALID_DOMAINS = ['amazon', 'dslr', 'webcam']
 
 
 class Office31(ImageFolder):
-    def __init__(self, root_dir, domain, source, num_per_category=None, transforms=None):
-        self.domain = domain.lower()
-        if self.domain not in VALID_DOMAINS:
-            raise ValueError(f'"domain" argument must be one of: {VALID_DOMAINS}')
-
+    def __init__(self, root_dir, domain, source, full=True, num_per_category=None, transforms=None):
+        # store the attributes
         self.root_dir = root_dir
         self.source = source
+        self.domain = self.__check_domain(domain)
         self.domain_dir = os.path.join(self.root_dir, self.domain, 'images')
-
+        self.full = full
         self.num_per_category = num_per_category
-        if self.num_per_category is None:
-            if source:
-                if domain == 'amazon':
-                    self.num_per_category = 20
-                else:
-                    self.num_per_category = 8
-            else:
-                self.num_per_category = 3
+        self.transforms = transforms
 
-        self.sampled_files = self.sample_per_category()
+        # set up either the full train protocol or sampling protocol
+        if self.full and self.num_per_category is None:
+            super().__init__(root=self.domain_dir, transform=transforms)
+        else:
+            if self.num_per_category is None:
+                self.num_per_category = self.__default_num_per_category(domain, source)
+            self.sampled_files = self.sample_per_category()
+            super().__init__(root=self.domain_dir, is_valid_file=self.check_file, transform=transforms)
 
-        super().__init__(root=self.domain_dir, is_valid_file=self.check_file, transform=transforms)
+    @staticmethod
+    def __check_domain(domain):
+        domain = domain.lower()
+        if domain not in VALID_DOMAINS:
+            raise ValueError(f'"domain" argument must be one of: {VALID_DOMAINS}')
+        return domain
+
+    @staticmethod
+    def __default_num_per_category(domain, source):
+        if source and (domain == 'amazon'):
+            n = 20
+        elif source:
+            n = 8
+        else:  # target
+            n = 3
+        return n
 
     def sample_per_category(self):
         sampled_files = dict()
