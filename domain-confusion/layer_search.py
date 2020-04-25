@@ -2,18 +2,80 @@
 
 import torch
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from domain_adapt.data.office31 import Office31
 from domain_adapt.data.transforms import DefaultTransform
 from domain_adapt.nn.loss import mmd
 from domain_adapt.nn.models import pretrained_alexnet_fc6, pretrained_alexnet_fc7, pretrained_alexnet_fc8
 
-BATCH_SIZE = 31
+BATCH_SIZE = 32
+
+
+def load_batch(loader):
+    """Load a batch from a pytorch DataLoader
+
+    Note: The `shuffle` arg in the DataLoader instance must be true in order to get a random batch during each call
+
+    Parameters
+    ----------
+    loader: DataLoader
+
+    Returns
+    -------
+    tuple
+        The custom batch tuple from the DataLoader object
+    """
+    return next(iter(loader))
+
+
+def progress_wrap(loader):
+    return tqdm(loader, total=len(loader))
+
+
+def calculate_mmd(model, src_loader, tgt_loader, device):
+    model = model.eval()
+    model = model.to(device)
+
+    mmd_values = []
+    for src_imgs, _ in progress_wrap(src_loader):
+        tgt_imgs, _ = load_batch(tgt_loader)
+
+        src_imgs = src_imgs.to(device)
+        tgt_imgs = tgt_imgs.to(device)
+
+        src_features = model(src_imgs)
+        tgt_features = model(tgt_imgs)
+
+        val = mmd(src_features, tgt_features)
+        mmd_values.append(val)
+    return sum(mmd_values) / len(mmd_values)
+
+
+def search_fc_layers(src_loader, tgt_loader):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    print('Calculating MMD for fc6:')
+    model = pretrained_alexnet_fc6()
+    mmd_fc6 = calculate_mmd(model, src_loader, tgt_loader, device)
+    print()
+
+    print('Calculating MMD for fc7:')
+    model = pretrained_alexnet_fc7()
+    mmd_fc7 = calculate_mmd(model, src_loader, tgt_loader, device)
+    print()
+
+    print('Calculating MMD for fc8:')
+    model = pretrained_alexnet_fc8()
+    mmd_fc8 = calculate_mmd(model, src_loader, tgt_loader, device)
+    print()
+
+    return [mmd_fc6, mmd_fc7, mmd_fc8]
+
 
 if __name__ == '__main__':
     # set up the source and target datasets
     root_dir = '/home/mchobanyan/data/research/transfer/office'
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     amazon_data = Office31(root_dir, domain='amazon', source=True, transforms=DefaultTransform())
     webcam_data = Office31(root_dir, domain='webcam', source=False, transforms=DefaultTransform())
@@ -21,15 +83,6 @@ if __name__ == '__main__':
     amazon_loader = DataLoader(amazon_data, batch_size=BATCH_SIZE, shuffle=True)
     webcam_loader = DataLoader(webcam_data, batch_size=BATCH_SIZE, shuffle=True)
 
-    # calculate MMD for fc6
-    model = pretrained_alexnet_fc6()
-    model = model.eval()
-    model = model.to(device)
-
-    mmd_values = []
-    for src_imgs, tgt_imgs in zip(amazon_loader, webcam_loader):
-        src_imgs = src_imgs.to(device)
-        tgt_imgs = tgt_imgs.to(device)
-        mmd_values.append(mmd(src_imgs, tgt_imgs))
-    mmd_val = sum(mmd_values) / len(mmd_values)
-
+    result = search_fc_layers(amazon_loader, webcam_loader)
+    for layer, val in zip(['fc6', 'fc7', 'fc8'], result):
+        print(f'{layer}: {val}')
