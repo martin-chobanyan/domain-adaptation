@@ -18,4 +18,4 @@ def mmd(x1, x2):
     float
     """
     mean_diff = (x1.sum(dim=0) / x1.size(0)) - (x2.sum(dim=0) / x2.size(0))
-    return torch.norm(mean_diff, p=2)
+    return torch.norm(mean_diff, p=2).item()
