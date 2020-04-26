@@ -8,29 +8,9 @@ from domain_adapt.data.office31 import Office31
 from domain_adapt.data.transforms import DefaultTransform
 from domain_adapt.nn.loss import mmd
 from domain_adapt.nn.models import pretrained_alexnet_fc6, pretrained_alexnet_fc7, pretrained_alexnet_fc8
+from domain_adapt.utils.misc import load_batch
 
 BATCH_SIZE = 32
-
-
-def load_batch(loader):
-    """Load a batch from a pytorch DataLoader
-
-    Note: The `shuffle` arg in the DataLoader instance must be true in order to get a random batch during each call
-
-    Parameters
-    ----------
-    loader: DataLoader
-
-    Returns
-    -------
-    tuple
-        The custom batch tuple from the DataLoader object
-    """
-    return next(iter(loader))
-
-
-def progress_wrap(loader):
-    return tqdm(loader, total=len(loader))
 
 
 def calculate_mmd(model, src_loader, tgt_loader, device):
@@ -38,7 +18,7 @@ def calculate_mmd(model, src_loader, tgt_loader, device):
     model = model.to(device)
 
     mmd_values = []
-    for src_imgs, _ in progress_wrap(src_loader):
+    for src_imgs, _ in tqdm(src_loader):
         tgt_imgs, _ = load_batch(tgt_loader)
 
         src_imgs = src_imgs.to(device)

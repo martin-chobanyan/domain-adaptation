@@ -2,6 +2,8 @@
 
 import os
 
+from tqdm import tqdm
+
 
 class AverageKeeper:
     """
@@ -65,3 +67,20 @@ def get_script_dir(script_path):
     str
     """
     return os.path.split(os.path.realpath(script_path))[0]
+
+
+def load_batch(loader):
+    """Load a batch from a pytorch DataLoader
+
+    Note: The `shuffle` arg in the DataLoader instance must be true in order to get a random batch during each call
+
+    Parameters
+    ----------
+    loader: DataLoader
+
+    Returns
+    -------
+    tuple
+        The custom batch tuple from the DataLoader object
+    """
+    return next(iter(loader))
