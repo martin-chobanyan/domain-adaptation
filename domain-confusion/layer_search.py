@@ -1,35 +1,15 @@
 """This script searches for the most appropriate layer (based on MMD) in AlexNet to attach the adaptation layer"""
 
-import torch
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from domain_adapt.data.office31 import Office31
 from domain_adapt.data.transforms import DefaultTransform
-from domain_adapt.nn.loss import mmd
 from domain_adapt.nn.models import pretrained_alexnet_fc6, pretrained_alexnet_fc7, pretrained_alexnet_fc8
-from domain_adapt.utils.misc import get_device, load_batch
+from domain_adapt.utils.misc import get_device
+
+from model import calculate_mmd
 
 BATCH_SIZE = 64
-
-
-def calculate_mmd(model, src_loader, tgt_loader, device, progress=True):
-    model = model.eval()
-    model = model.to(device)
-
-    mmd_values = []
-    for src_imgs, _ in tqdm(src_loader, disable=(not progress)):
-        tgt_imgs, _ = load_batch(tgt_loader)
-
-        src_imgs = src_imgs.to(device)
-        tgt_imgs = tgt_imgs.to(device)
-
-        src_features = model(src_imgs)
-        tgt_features = model(tgt_imgs)
-
-        val = mmd(src_features, tgt_features)
-        mmd_values.append(val)
-    return sum(mmd_values) / len(mmd_values)
 
 
 def search_fc_layers(src_loader, tgt_loader):

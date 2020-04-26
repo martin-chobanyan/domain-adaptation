@@ -14,29 +14,13 @@ from domain_adapt.nn.models import pretrained_alexnet_fc7
 from domain_adapt.utils.misc import create_dir, get_device, get_script_dir
 from domain_adapt.utils.train import TrainingLogger, train_epoch, test_epoch
 
-from layer_search import calculate_mmd
+from model import calculate_mmd, DomainConfusion
 
 BATCH_SIZE = 64
 NUM_CLASSES = 31
 NUM_EPOCHS = 30
 LEARNING_RATE = 0.0001
 FIGSIZE = (9, 6)
-
-class DomainConfusion(nn.Module):
-    def __init__(self, base_nn, base_width, adapt_width, num_classes):
-        super().__init__()
-        self.base_nn = base_nn
-        self.adapt_nn = nn.Sequential(nn.Linear(base_width, adapt_width), nn.ReLU())
-        self.classifier = nn.Linear(adapt_width, num_classes)
-
-    def strip_classifier(self):
-        return nn.Sequential(self.base_nn, self.adapt_nn)
-
-    def invariant_features(self, x):
-        return self.adapt_nn(self.base_nn(x))
-
-    def forward(self, x):
-        return self.classifier(self.invariant_features(x))
 
 
 def train_width(width, src_loader, tgt_loader, log_dir, num_epochs=NUM_EPOCHS, lr=LEARNING_RATE):

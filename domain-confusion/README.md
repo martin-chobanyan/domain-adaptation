@@ -14,4 +14,4 @@ and the domain confusion loss forces the source and target distributions to have
 - add search for adaptation layer dimension
 
 ### Things that have been changed:
-- N/A
+- For the adaption layer width search, each model is trained for 30 epochs.
