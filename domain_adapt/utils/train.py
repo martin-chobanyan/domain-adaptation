@@ -11,19 +11,34 @@ class TrainingLogger:
     ----------
     filepath: str
         The filepath for the output CSV log file
+    header: list[str], optional
+        The custom header for the CSV file. If not specified, a default header will be initialized.
     """
 
-    def __init__(self, filepath):
+    def __init__(self, filepath, header=None):
         self.filepath = filepath
-        with open(filepath, 'w') as file:
-            header = ['Run', 'Epoch', 'Source Loss', 'Target Loss', 'Source Accuracy', 'Target Accuracy']
+        self.header = header
+        if self.header is None:
+            self.header = ['run', 'epoch', 'src_loss', 'tgt_loss', 'src_acc', 'tgt_acc']
+        with open(self.filepath, 'w') as file:
             writer = csv_writer(file)
-            writer.writerow(header)
+            writer.writerow(self.header)
 
-    def add_entry(self, run, epoch, src_loss, tgt_loss, src_acc, tgt_acc):
+    def add_entry(self, *args):
+        """Add a row to the logger file
+        Each value in the entry must align with the specified header.
+        If no header was specified, then the inputs must be in the following order:
+        1. run index
+        2. epoch index
+        3. source loss
+        4. target loss
+        5. source accuracy
+        6. target accuracy
+        """
+        assert len(args) == len(self.header), "Number of inputs does not match the header"
         with open(self.filepath, 'a') as file:
             writer = csv_writer(file)
-            writer.writerow([run, epoch, src_loss, tgt_loss, src_acc, tgt_acc])
+            writer.writerow([*args])
 
 
 def softmax_pred(linear_out):
