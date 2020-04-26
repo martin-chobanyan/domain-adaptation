@@ -7,10 +7,9 @@ VALID_DOMAINS = ['amazon', 'dslr', 'webcam']
 
 
 class Office31(ImageFolder):
-    def __init__(self, root_dir, domain, source, full=True, num_per_category=None, transforms=None):
+    def __init__(self, root_dir, domain, full=True, num_per_category=None, transforms=None):
         # store the attributes
         self.root_dir = root_dir
-        self.source = source
         self.domain = self.__check_domain(domain)
         self.domain_dir = os.path.join(self.root_dir, self.domain, 'images')
         self.full = full
@@ -22,7 +21,7 @@ class Office31(ImageFolder):
             super().__init__(root=self.domain_dir, transform=transforms)
         else:
             if self.num_per_category is None:
-                self.num_per_category = self.__default_num_per_category(domain, source)
+                self.num_per_category = self.__default_num_per_category(domain)
             self.sampled_files = self.sample_per_category()
             super().__init__(root=self.domain_dir, is_valid_file=self.check_file, transform=transforms)
 
@@ -34,13 +33,11 @@ class Office31(ImageFolder):
         return domain
 
     @staticmethod
-    def __default_num_per_category(domain, source):
-        if source and (domain == 'amazon'):
+    def __default_num_per_category(domain):
+        if domain == 'amazon':
             n = 20
-        elif source:
+        else:
             n = 8
-        else:  # target
-            n = 3
         return n
 
     def sample_per_category(self):
