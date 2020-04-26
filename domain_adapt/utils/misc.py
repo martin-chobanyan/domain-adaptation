@@ -2,7 +2,7 @@
 
 import os
 
-from tqdm import tqdm
+import torch
 
 
 class AverageKeeper:
@@ -84,3 +84,14 @@ def load_batch(loader):
         The custom batch tuple from the DataLoader object
     """
     return next(iter(loader))
+
+def get_device():
+    """Get the cuda device if it is available
+
+    Note: this assumes that there is only one GPU device
+
+    Returns
+    -------
+    torch.device
+    """
+    return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
