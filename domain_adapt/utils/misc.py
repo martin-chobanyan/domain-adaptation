@@ -85,6 +85,7 @@ def load_batch(loader):
     """
     return next(iter(loader))
 
+
 def get_device():
     """Get the cuda device if it is available
 

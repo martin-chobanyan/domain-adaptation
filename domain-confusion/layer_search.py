@@ -8,7 +8,7 @@ from domain_adapt.data.office31 import Office31
 from domain_adapt.data.transforms import DefaultTransform
 from domain_adapt.nn.loss import mmd
 from domain_adapt.nn.models import pretrained_alexnet_fc6, pretrained_alexnet_fc7, pretrained_alexnet_fc8
-from domain_adapt.utils.misc import load_batch
+from domain_adapt.utils.misc import get_device, load_batch
 
 BATCH_SIZE = 32
 
@@ -33,7 +33,7 @@ def calculate_mmd(model, src_loader, tgt_loader, device):
 
 
 def search_fc_layers(src_loader, tgt_loader):
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     print('Calculating MMD for fc6:')
     model = pretrained_alexnet_fc6()
