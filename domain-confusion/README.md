@@ -9,9 +9,7 @@ into an auxiliary domain confusion loss (based on maximum mean discrepancy). Tra
 and the domain confusion loss forces the source and target distributions to have closer features spaces 
 (while not hindering their ability to discriminate with respect to the labels)
 
-### To Do:
-- add search for target layer
-- add search for adaptation layer dimension
 
 ### Things that have been changed:
 - For the adaption layer width search, each model is trained for 30 epochs.
+- Only unsupervised domain adaptation is performed on the Office dataset
