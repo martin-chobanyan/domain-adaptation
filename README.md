@@ -14,6 +14,7 @@ Run `pip install .` from the repo's root to install the **domain_adapt** package
 ## Dependencies
 - matplotlib
 - numpy
+- pandas
 - torch
 - torchvision
 - tqdm

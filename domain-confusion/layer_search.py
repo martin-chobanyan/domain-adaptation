@@ -10,15 +10,15 @@ from domain_adapt.nn.loss import mmd
 from domain_adapt.nn.models import pretrained_alexnet_fc6, pretrained_alexnet_fc7, pretrained_alexnet_fc8
 from domain_adapt.utils.misc import get_device, load_batch
 
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 
 
-def calculate_mmd(model, src_loader, tgt_loader, device):
+def calculate_mmd(model, src_loader, tgt_loader, device, progress=True):
     model = model.eval()
     model = model.to(device)
 
     mmd_values = []
-    for src_imgs, _ in tqdm(src_loader):
+    for src_imgs, _ in tqdm(src_loader, disable=(not progress)):
         tgt_imgs, _ = load_batch(tgt_loader)
 
         src_imgs = src_imgs.to(device)
