@@ -1,5 +1,5 @@
 # local output results
-results/
+results*/
 
 # pycharm
 .idea/

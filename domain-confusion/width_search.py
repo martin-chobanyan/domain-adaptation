@@ -14,7 +14,7 @@ from domain_adapt.nn.models import pretrained_alexnet_fc7
 from domain_adapt.utils.misc import create_dir, get_device, get_script_dir
 from domain_adapt.utils.train import TrainingLogger, train_epoch, test_epoch
 
-from model import calculate_mmd, DomainConfusion
+from model import calculate_mmd, load_model
 
 BATCH_SIZE = 64
 NUM_CLASSES = 31
@@ -29,7 +29,7 @@ def train_width(width, src_loader, tgt_loader, log_dir, num_epochs=NUM_EPOCHS, l
     logger = TrainingLogger(log_path, ['epoch', 'src_acc', 'tgt_acc'])
 
     device = get_device()
-    model = DomainConfusion(pretrained_alexnet_fc7(), base_width=4096, adapt_width=width, num_classes=NUM_CLASSES)
+    model = load_model()
     model = model.to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = Adam(model.parameters(), lr=lr)
@@ -70,8 +70,8 @@ def plot_results(widths, mmds, accs, figsize=FIGSIZE):
 if __name__ == '__main__':
     # set up the source and target datasets
     root_dir = '/home/mchobanyan/data/research/transfer/office'
-    amazon_data = Office31(root_dir, domain='amazon', source=True, transforms=DefaultTransform())
-    webcam_data = Office31(root_dir, domain='webcam', source=False, transforms=DefaultTransform())
+    amazon_data = Office31(root_dir, domain='amazon', transforms=DefaultTransform())
+    webcam_data = Office31(root_dir, domain='webcam', transforms=DefaultTransform())
     amazon_loader = DataLoader(amazon_data, batch_size=BATCH_SIZE, shuffle=True)
     webcam_loader = DataLoader(webcam_data, batch_size=BATCH_SIZE, shuffle=True)
 

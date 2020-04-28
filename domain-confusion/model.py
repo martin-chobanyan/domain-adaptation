@@ -2,6 +2,7 @@ import torch.nn as nn
 from tqdm import tqdm
 
 from domain_adapt.nn.loss import mmd
+from domain_adapt.nn.models import pretrained_alexnet_fc7
 from domain_adapt.utils.misc import load_batch
 
 
@@ -22,6 +23,10 @@ class DomainConfusion(nn.Module):
         return self.classifier(self.invariant_features(x))
 
 
+def load_model(width):
+    return DomainConfusion(pretrained_alexnet_fc7(), base_width=4096, adapt_width=width, num_classes=31)
+
+
 def calculate_mmd(model, src_loader, tgt_loader, device, progress=True):
     model = model.eval()
     model = model.to(device)
@@ -39,3 +44,28 @@ def calculate_mmd(model, src_loader, tgt_loader, device, progress=True):
         val = mmd(src_features, tgt_features)
         mmd_values.append(val)
     return sum(mmd_values) / len(mmd_values)
+
+
+def train_domain_confusion(model, src_loader, tgt_loader, criterion, optimizer, device, da_lambda):
+    model = model.train()
+    for src_images, src_labels in src_loader:
+        tgt_images, _ = load_batch(tgt_loader)
+
+        src_images = src_images.to(device)
+        src_labels = src_labels.to(device)
+        tgt_images = tgt_images.to(device)
+
+        optimizer.zero_grad()
+
+        # source label loss
+        label_scores = model(src_images)
+        loss_label = criterion(label_scores, src_labels)
+
+        # domain confusion loss
+        src_features = model.invariant_features(src_images)
+        tgt_features = model.invariant_features(tgt_images)
+        loss_mmd = mmd(src_features, tgt_features)
+
+        loss_total = loss_label + da_lambda * loss_mmd
+        loss_total.backward()
+        optimizer.step()

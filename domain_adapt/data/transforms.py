@@ -8,7 +8,7 @@ class ImagenetNorm(Normalize):
 
 
 class DefaultTransform:
-    def __init__(self, img_shape=(256, 256)):
+    def __init__(self, img_shape=256):
         self.transform = Compose([Resize(img_shape), ToTensor(), ImagenetNorm()])
 
     def __call__(self, img):

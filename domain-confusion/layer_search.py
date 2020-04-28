@@ -37,8 +37,8 @@ if __name__ == '__main__':
     # set up the source and target datasets
     root_dir = '/home/mchobanyan/data/research/transfer/office'
 
-    amazon_data = Office31(root_dir, domain='amazon', source=True, transforms=DefaultTransform())
-    webcam_data = Office31(root_dir, domain='webcam', source=False, transforms=DefaultTransform())
+    amazon_data = Office31(root_dir, domain='amazon', transforms=DefaultTransform())
+    webcam_data = Office31(root_dir, domain='webcam', transforms=DefaultTransform())
 
     amazon_loader = DataLoader(amazon_data, batch_size=BATCH_SIZE, shuffle=True)
     webcam_loader = DataLoader(webcam_data, batch_size=BATCH_SIZE, shuffle=True)

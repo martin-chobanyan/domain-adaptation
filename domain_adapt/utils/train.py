@@ -65,7 +65,9 @@ def accuracy(preds, targets):
     Parameters
     ----------
     preds: torch.LongTensor
+        The predicted labels as a 1D LongTensor
     targets: torch.LongTensor
+        The ground truth labels as a 1D LongTensor
 
     Returns
     -------
@@ -145,7 +147,7 @@ def test_epoch(model, loader, criterion, device):
             loss_avg.add(loss.detach().item())
 
             preds = softmax_pred(out.detach())
-            acc_avg.add(accuracy(preds, labels.squeeze()))
+            acc_avg.add(accuracy(preds, labels))
     return loss_avg.calculate(), acc_avg.calculate()
 
 
