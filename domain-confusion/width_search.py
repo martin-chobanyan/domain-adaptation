@@ -14,7 +14,7 @@ from domain_adapt.nn.models import pretrained_alexnet_fc7
 from domain_adapt.utils.misc import create_dir, get_device, get_script_dir
 from domain_adapt.utils.train import TrainingLogger, train_epoch, test_epoch
 
-from model import calculate_mmd, load_model
+from dc_model import calculate_mmd, load_model
 
 BATCH_SIZE = 64
 NUM_CLASSES = 31

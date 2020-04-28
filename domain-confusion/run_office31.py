@@ -10,7 +10,7 @@ from domain_adapt.data.transforms import DefaultTransform
 from domain_adapt.utils.misc import create_dir, get_device, get_script_dir
 from domain_adapt.utils.train import checkpoint, test_epoch, TrainingLogger
 
-from model import DomainConfusion, load_model, train_domain_confusion
+from dc_model import load_model, train_domain_confusion
 
 NUM_RUNS = 5
 NUM_EPOCHS = 50

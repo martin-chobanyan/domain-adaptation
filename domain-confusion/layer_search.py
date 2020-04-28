@@ -7,7 +7,7 @@ from domain_adapt.data.transforms import DefaultTransform
 from domain_adapt.nn.models import pretrained_alexnet_fc6, pretrained_alexnet_fc7, pretrained_alexnet_fc8
 from domain_adapt.utils.misc import get_device
 
-from model import calculate_mmd
+from dc_model import calculate_mmd
 
 BATCH_SIZE = 64
 
