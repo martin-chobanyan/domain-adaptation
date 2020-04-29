@@ -4,6 +4,7 @@ from tqdm import tqdm
 from domain_adapt.nn.loss import mmd
 from domain_adapt.nn.models import pretrained_alexnet_fc7
 from domain_adapt.utils.misc import load_batch
+from domain_adapt.utils.train import accuracy, AverageKeeper, softmax_pred
 
 
 class DomainConfusionNN(nn.Module):
@@ -20,6 +21,7 @@ class DomainConfusionNN(nn.Module):
     num_classes: int
         The number of classes for the classification layer
     """
+
     def __init__(self, base_nn, base_width, adapt_width, num_classes):
         super().__init__()
         self.base_nn = base_nn
@@ -97,7 +99,14 @@ def train_domain_confusion(model, src_loader, tgt_loader, criterion, optimizer, 
     optimizer: Optimizer
     device: torch.device
     da_lambda: float
+
+    Returns
+    -------
+    tuple[float]
+        The training source cross entropy loss and accuracy
     """
+    acc_avg = AverageKeeper()
+    loss_avg = AverageKeeper()
     model = model.train()
     for src_images, src_labels in src_loader:
         tgt_images, _ = load_batch(tgt_loader)
@@ -122,3 +131,8 @@ def train_domain_confusion(model, src_loader, tgt_loader, criterion, optimizer, 
         loss_total = loss_label + da_lambda * (loss_mmd ** 2)
         loss_total.backward()
         optimizer.step()
+
+        preds = softmax_pred(label_scores.detach())
+        acc_avg.add(accuracy(preds, src_labels))
+        loss_avg.add(loss_label.detach().item())
+    return loss_avg.calculate(), acc_avg.calculate()
