@@ -7,6 +7,19 @@ from domain_adapt.utils.misc import load_batch
 
 
 class DomainConfusionNN(nn.Module):
+    """Deep Domain Confusion CNN
+
+    Parameters
+    ----------
+    base_nn: nn.Module
+        The pre-trained base CNN feature extractor for the model
+    base_width: int
+        The dimension of the flattened output of base_nn
+    adapt_width: int
+        The dimension of the adaptation layer
+    num_classes: int
+        The number of classes for the classification layer
+    """
     def __init__(self, base_nn, base_width, adapt_width, num_classes):
         super().__init__()
         self.base_nn = base_nn
@@ -14,20 +27,44 @@ class DomainConfusionNN(nn.Module):
         self.classify_nn = nn.Linear(adapt_width, num_classes)
 
     def strip_classifier(self):
+        """Retrieve the network without the final classifier layer"""
         return nn.Sequential(self.base_nn, self.adapt_nn)
 
     def invariant_features(self, x):
+        """Get the output of the adaptation layer"""
         return self.adapt_nn(self.base_nn(x))
 
     def forward(self, x):
+        """Get the classification scores (for normal use once trained)"""
         return self.classify_nn(self.invariant_features(x))
 
 
-def load_model(width):
+def load_model(width=256):
+    """Load the default version of the domain confusion model
+
+    The default version uses a pre-trained AlexNet as the backbone excluding the final fc8 layer,
+    an adaptation width of 256, and 31 classes (for Office-31).
+    """
     return DomainConfusionNN(pretrained_alexnet_fc7(), base_width=4096, adapt_width=width, num_classes=31)
 
 
 def calculate_mmd(model, src_loader, tgt_loader, device, progress=True):
+    """Calculate Maximum Mean Discrepancy across two sets of data
+
+    This function is used to for choosing the position and width of the adaptation layer.
+
+    Parameters
+    ----------
+    model: nn.Module
+    src_loader: DataLoader
+    tgt_loader: DataLoader
+    device: torch.device
+    progress: bool, optional
+
+    Returns
+    -------
+    float
+    """
     model = model.eval()
     model = model.to(device)
 
@@ -48,7 +85,9 @@ def calculate_mmd(model, src_loader, tgt_loader, device, progress=True):
 
 def train_domain_confusion(model, src_loader, tgt_loader, criterion, optimizer, device, da_lambda):
     """A single epoch of domain confusion training
-    
+
+    Note: The `shuffle` arg for the target DataLoader must be True in order to get a random batch for each iteration.
+
     Parameters
     ----------
     model: DomainConfusionNN
