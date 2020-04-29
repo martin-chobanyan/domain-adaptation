@@ -31,4 +31,4 @@ def mmd(x1, x2):
     -------
     float
     """
-    return torch.norm(x1.mean(dim=0) - x2.mean(dim=0), p=2).item()
+    return torch.norm(x1.mean(dim=0) - x2.mean(dim=0), p=2)
