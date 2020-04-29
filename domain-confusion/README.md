@@ -9,11 +9,9 @@ into an auxiliary domain confusion loss (based on maximum mean discrepancy). Tra
 and the domain confusion loss forces the source and target distributions to have closer features spaces 
 (while not hindering their ability to discriminate with respect to the labels)
 
+### Things that have been changed:
+- The optimizer and learning rate were not specified in the paper (here we use SGD with base lr=1e-5, momentum=0.9)
+- For the adaption layer width search, each model is trained for 30 epochs.
 
 ### To Do:
-- add documentation
-
-
-### Things that have been changed:
-- For the adaption layer width search, each model is trained for 30 epochs.
-- Only unsupervised domain adaptation is performed on the Office dataset
+- Implement semi-supervised domain adaptation as well
