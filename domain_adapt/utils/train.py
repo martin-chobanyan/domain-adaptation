@@ -145,7 +145,6 @@ def test_epoch(model, loader, criterion, device):
             out = model(images)
             loss = criterion(out, labels)
             loss_avg.add(loss.detach().item())
-
             preds = softmax_pred(out.detach())
             acc_avg.add(accuracy(preds, labels))
     return loss_avg.calculate(), acc_avg.calculate()
