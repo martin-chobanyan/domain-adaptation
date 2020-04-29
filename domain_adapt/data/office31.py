@@ -43,8 +43,13 @@ class Office31(ImageFolder):
     def sample_per_category(self):
         sampled_files = dict()
         for category in os.listdir(self.domain_dir):
-            category_dir = os.path.join(self.domain_dir, category)
-            sampled_files[category] = set(random.sample(os.listdir(category_dir), self.num_per_category))
+            filenames = os.listdir(os.path.join(self.domain_dir, category))
+            num_files = len(filenames)
+            if self.num_per_category < num_files:
+                sample_result = random.sample(filenames, self.num_per_category)
+            else:
+                sample_result = filenames
+            sampled_files[category] = set(sample_result)
         return sampled_files
 
     def check_file(self, filepath):
