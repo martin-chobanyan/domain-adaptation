@@ -1,3 +1,4 @@
+"""Training script for deep domain confusion on Office-31 dataset"""
 import os
 
 import pandas as pd
@@ -15,7 +16,7 @@ from dc_model import load_model, train_domain_confusion
 
 NUM_RUNS = 5
 NUM_EPOCHS = 150
-BATCH_SIZE = 64
+BATCH_SIZE = 256
 ADAPT_WIDTH = 256
 DA_LAMBDA = 0.25
 LEARNING_RATE = 0.00001
