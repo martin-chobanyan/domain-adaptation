@@ -21,7 +21,6 @@ Run `pip install .` from the repo's root to install the **domain_adapt** package
 
 ## Papers to implement
 - [Domain Adversarial Neural Networks (DANN)](https://arxiv.org/pdf/1505.07818.pdf)
-- [Deep Domain Confusion](https://arxiv.org/pdf/1412.3474.pdf)
 - [Deep CORAL](https://arxiv.org/abs/1607.01719)
 
 ## Datasets to add
