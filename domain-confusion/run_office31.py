@@ -15,7 +15,7 @@ from domain_adapt.utils.train import checkpoint, test_epoch, TrainingLogger
 from dc_model import load_model, train_domain_confusion
 
 NUM_RUNS = 5
-NUM_EPOCHS = 150
+NUM_EPOCHS = 200
 BATCH_SIZE = 256
 ADAPT_WIDTH = 256
 DA_LAMBDA = 0.25
