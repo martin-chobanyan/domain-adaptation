@@ -4,68 +4,16 @@ from math import exp
 
 import torch
 import torch.nn as nn
-from torchvision.models import alexnet
 
 from domain_adapt.nn.layers import ReverseGradient
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-# Training utilities for DANN
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-def train_dann_epoch(model, src_loader, tgt_loader, criterion, optimizer, device, da_scale):
-    """Train a DANN model for one epoch
-
-    Parameters
-    ----------
-    model: DANN
-    src_loader: DataLoader
-    tgt_loader: DataLoader
-    criterion: callable
-    optimizer: Optimizer
-    device: torch.device
-    da_scale: float
-    """
-    model = model.train()
-    for (src_images, src_labels), (tgt_images, _) in zip(src_loader, tgt_loader):
-        src_images = src_images.to(device)
-        src_labels = src_labels.to(device)
-        tgt_images = tgt_images.to(device)
-
-        n_src = len(src_images)
-        src_domains = torch.ones(n_src, dtype=torch.int64).to(device)
-
-        n_tgt = len(tgt_images)
-        tgt_domains = torch.zeros(n_tgt, dtype=torch.int64).to(device)
-
-        optimizer.zero_grad()
-        out_src_label, out_src_domain, out_tgt_domain = model(src_images, tgt_images, da_scale)
-        loss_src_label = criterion(out_src_label, src_labels)
-        loss_src_domain = criterion(out_src_domain, src_domains)
-        loss_tgt_domain = criterion(out_tgt_domain, tgt_domains)
-        loss = loss_src_label + loss_src_domain + loss_tgt_domain
-        loss.backward()
-        optimizer.step()
+from domain_adapt.nn.models import pretrained_alexnet_fc7
+from domain_adapt.utils.misc import load_batch
+from domain_adapt.utils.train import AverageKeeper, accuracy, softmax_pred
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Models and layers
 # ----------------------------------------------------------------------------------------------------------------------
-
-
-def pretrained_alexnet():
-    """Prepares an AlexNet feature extractor pre-trained on ImageNet
-
-    Note: The final fc8 layer is removed from the network, resulting in a 4096-dim output.
-
-    Returns
-    -------
-    nn.Module
-    """
-    model = alexnet(pretrained=True)
-    model.classifier = nn.Sequential(*[child for child in list(model.classifier.children())[:6]])
-    return model
 
 
 class LabelClassifier(nn.Module):
@@ -135,7 +83,7 @@ class DANN(nn.Module):
         self.domain_nn = domain_nn
         self.reverse_grad = ReverseGradient()
 
-    def retrieve_model(self):
+    def get_label_classifier(self):
         """Concatenates the feature extractor and the label classifier
 
         This should be used when domain adaptation has been applied and the resulting model needs to be retrieved.
@@ -182,9 +130,68 @@ class DANN(nn.Module):
         return out_src_label, out_src_domain, out_tgt_domain
 
 
+def load_model(num_classes):
+    # set up the model components as specified in the paper
+    feature_nn = pretrained_alexnet_fc7()
+    label_nn = LabelClassifier(num_classes)
+    domain_nn = DomainClassifier()
+    return DANN(feature_nn, label_nn, domain_nn)
+
+
 # ----------------------------------------------------------------------------------------------------------------------
-# Define the schedulers
+# Training utilities for DANN
 # ----------------------------------------------------------------------------------------------------------------------
+
+
+def train_dann_epoch(model, src_loader, tgt_loader, criterion, optimizer, device, da_lambda):
+    """Train a DANN model for one epoch
+
+    Parameters
+    ----------
+    model: DANN
+    src_loader: DataLoader
+    tgt_loader: DataLoader
+    criterion: callable
+    optimizer: Optimizer
+    device: torch.device
+    da_scale: float
+    """
+    avg_acc = AverageKeeper()
+    avg_label_loss = AverageKeeper()
+    avg_domain_loss = AverageKeeper()
+    model.train()
+    for src_images, src_labels in src_loader:
+        tgt_images, _ = load_batch(tgt_loader)
+
+        src_images = src_images.to(device)
+        src_labels = src_labels.to(device)
+        tgt_images = tgt_images.to(device)
+
+        # assign 1 to the source domain and 0 to the target domain
+        num_src = len(src_images)
+        num_tgt = len(tgt_images)
+        src_domains = torch.ones(num_src, dtype=torch.int64).to(device)
+        tgt_domains = torch.zeros(num_tgt, dtype=torch.int64).to(device)
+
+        optimizer.zero_grad()
+        out_src_label, out_src_domain, out_tgt_domain = model(src_images, tgt_images, da_lambda)
+        loss_label = criterion(out_src_label, src_labels)
+
+        # combine the source and target domain losses by weighted average
+        loss_src_domain = criterion(out_src_domain, src_domains)
+        loss_tgt_domain = criterion(out_tgt_domain, tgt_domains)
+        loss_domain = (num_src * loss_src_domain + num_tgt * loss_tgt_domain) / (num_src + num_tgt)
+
+        loss_total = loss_label + loss_domain
+        loss_total.backward()
+        optimizer.step()
+
+        preds = softmax_pred(out_src_label.detach())
+        avg_acc.add(accuracy(preds, src_labels))
+        avg_label_loss.add(loss_label.detach().item())
+        avg_domain_loss.add(loss_domain.detach().item())
+
+    return avg_acc.calculate(), avg_label_loss.calculate(), avg_domain_loss.calculate()
 
 
 class LRScheduler:
@@ -195,12 +202,12 @@ class LRScheduler:
     Parameters
     ----------
     max_epochs: int
-    init_lr: float, optional
+    init_lr: float
     alpha: float, optional
     beta: float, optional
     """
 
-    def __init__(self, max_epochs, init_lr=0.01, alpha=10, beta=0.75):
+    def __init__(self, max_epochs, init_lr, alpha=10, beta=0.75):
         self.max_epochs = max_epochs
         self.lr_0 = init_lr
         self.alpha = alpha
@@ -226,7 +233,7 @@ class LRScheduler:
 class DAScheduler:
     """The domain adaptation hyperparameter scheduler
 
-     This hyperparamter controls scales the domain regularization loss.
+     This hyperparameter controls scales the domain regularization loss.
      The value is initialized at zero and gradually changed to one.
 
      Parameters
